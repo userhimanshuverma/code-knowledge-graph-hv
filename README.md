@@ -403,6 +403,24 @@ Add to your Cursor settings:
 }
 ```
 
+#### Kiro Configuration
+
+Add to your Kiro MCP configuration file (usually in settings or config):
+
+```json
+{
+  "mcpServers": {
+    "knowledge-graph": {
+      "command": "kg-mcp",
+      "args": ["--graph-path", "storage/graph.json"],
+      "cwd": "/path/to/your/project"
+    }
+  }
+}
+```
+
+**For Kiro, ensure you specify the correct `cwd` (current working directory)** pointing to your project where the knowledge graph is built.
+
 ## 🤖 LLM Integration Guide
 
 ### How LLMs Use the Knowledge Graph
