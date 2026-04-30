@@ -43,6 +43,12 @@ class MCPServer:
             return None
         elif method == "shutdown":
             return self._handle_shutdown(request_id)
+        elif method == "tools/list":
+            return self._handle_tools_list(request_id)
+        elif method == "resources/list":
+            return self._handle_resources_list(request_id)
+        elif method == "resources/templates/list":
+            return self._handle_templates_list(request_id)
         
         # Custom methods
         elif method == "dependencies":
@@ -85,6 +91,77 @@ class MCPServer:
             "jsonrpc": "2.0",
             "id": request_id,
             "result": None
+        }
+    
+    def _handle_tools_list(self, request_id: Any) -> Dict[str, Any]:
+        """Handle tools/list request."""
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "tools": [
+                    {
+                        "name": "dependencies",
+                        "description": "Get upstream and downstream dependencies for a target",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "target": {"type": "string", "description": "Target function or class name"},
+                                "depth": {"type": "number", "description": "Depth of dependency traversal", "default": 5}
+                            },
+                            "required": ["target"]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "description": "Search for nodes in the knowledge graph",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string", "description": "Search query"},
+                                "node_type": {"type": "string", "description": "Filter by node type (file, function, class)"}
+                            },
+                            "required": ["query"]
+                        }
+                    },
+                    {
+                        "name": "stats",
+                        "description": "Get graph statistics",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {}
+                        }
+                    },
+                    {
+                        "name": "graph",
+                        "description": "Get the complete knowledge graph",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {}
+                        }
+                    }
+                ]
+            }
+        }
+    
+    def _handle_resources_list(self, request_id: Any) -> Dict[str, Any]:
+        """Handle resources/list request."""
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "resources": []
+            }
+        }
+    
+    def _handle_templates_list(self, request_id: Any) -> Dict[str, Any]:
+        """Handle resources/templates/list request."""
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "resourceTemplates": []
+            }
         }
     
     def _handle_dependencies(self, params: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
