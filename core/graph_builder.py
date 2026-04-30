@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 import json
 
 from core.models import KnowledgeGraph, Node, Edge, NodeType, EdgeType
-from core.parser import PythonParser, ParsedFile
+from core.multi_parser import MultiLanguageParser, ParsedFile
 
 
 class GraphBuilder:
@@ -14,7 +14,7 @@ class GraphBuilder:
     def __init__(self, storage_path: str = "storage/graph.json"):
         self.storage_path = storage_path
         self.graph = KnowledgeGraph()
-        self.parser = PythonParser()
+        self.parser = MultiLanguageParser()
         self._ensure_storage_dir()
     
     def _ensure_storage_dir(self) -> None:
@@ -23,7 +23,7 @@ class GraphBuilder:
         storage_dir.mkdir(parents=True, exist_ok=True)
     
     def build_from_directory(self, directory: str, exclude_dirs: Optional[List[str]] = None) -> KnowledgeGraph:
-        """Build graph from all Python files in a directory."""
+        """Build graph from all supported files in a directory."""
         # Parse all files
         parsed_files = self.parser.parse_directory(directory, exclude_dirs)
         
@@ -129,6 +129,15 @@ class GraphBuilder:
         """Resolve import to actual file path."""
         # Simple heuristic: check if it's a local import
         current_dir = Path(current_file).parent
+        current_ext = Path(current_file).suffix.lower()
+        
+        # Determine file extensions based on current file type
+        if current_ext in ['.ts', '.tsx']:
+            extensions = ['.ts', '.tsx']
+        elif current_ext in ['.js', '.jsx']:
+            extensions = ['.js', '.jsx']
+        else:
+            extensions = ['.py']
         
         # Handle relative imports
         if import_name.startswith('.'):
@@ -141,10 +150,15 @@ class GraphBuilder:
                     base_dir = base_dir / part
             
             module_name = parts[-1] if parts[-1] else ''
-            possible_paths = [
-                base_dir / f"{module_name}.py",
-                base_dir / module_name / "__init__.py"
-            ]
+            possible_paths = []
+            
+            for ext in extensions:
+                possible_paths.extend([
+                    base_dir / f"{module_name}{ext}",
+                    base_dir / module_name / f"index{ext}",
+                    base_dir / f"{module_name}.py",  # Fallback to Python
+                    base_dir / module_name / "__init__.py"  # Fallback to Python
+                ])
             
             for path in possible_paths:
                 if path.exists():
@@ -153,12 +167,19 @@ class GraphBuilder:
         # Handle absolute imports (check if it's a local package)
         parts = import_name.split('.')
         module_name = parts[0]
-        possible_paths = [
-            current_dir / f"{module_name}.py",
-            current_dir / module_name / "__init__.py",
-            current_dir.parent / f"{module_name}.py",
-            current_dir.parent / module_name / "__init__.py"
-        ]
+        possible_paths = []
+        
+        for ext in extensions:
+            possible_paths.extend([
+                current_dir / f"{module_name}{ext}",
+                current_dir / module_name / f"index{ext}",
+                current_dir / f"{module_name}.py",
+                current_dir / module_name / "__init__.py",
+                current_dir.parent / f"{module_name}{ext}",
+                current_dir.parent / module_name / f"index{ext}",
+                current_dir.parent / f"{module_name}.py",
+                current_dir.parent / module_name / "__init__.py"
+            ])
         
         for path in possible_paths:
             if path.exists():
