@@ -35,7 +35,17 @@ class MCPServer:
         params = request.get("params", {})
         request_id = request.get("id")
         
-        if method == "dependencies":
+        # MCP protocol methods
+        if method == "initialize":
+            return self._handle_initialize(params, request_id)
+        elif method == "initialized":
+            # Client notification, no response needed
+            return None
+        elif method == "shutdown":
+            return self._handle_shutdown(request_id)
+        
+        # Custom methods
+        elif method == "dependencies":
             return self._handle_dependencies(params, request_id)
         elif method == "search":
             return self._handle_search(params, request_id)
@@ -45,6 +55,37 @@ class MCPServer:
             return self._handle_graph(request_id)
         else:
             return self._error_response(request_id, f"Unknown method: {method}")
+    
+    def _handle_initialize(self, params: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
+        """Handle MCP initialize handshake."""
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {
+                    "tools": {
+                        "listChanged": False
+                    },
+                    "resources": {
+                        "subscribe": False,
+                        "listChanged": False
+                    }
+                },
+                "serverInfo": {
+                    "name": "code-knowledge-graph",
+                    "version": "1.0.1"
+                }
+            }
+        }
+    
+    def _handle_shutdown(self, request_id: Any) -> Dict[str, Any]:
+        """Handle MCP shutdown."""
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": None
+        }
     
     def _handle_dependencies(self, params: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
         """Handle dependencies request."""
