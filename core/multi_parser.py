@@ -52,14 +52,36 @@ class MultiLanguageParser:
             return
         
         try:
+            # Initialize TypeScript parser
             self.ts_parser = tree_sitter.Parser()
-            self.ts_parser.language = tree_sitter_typescript.language()
+            try:
+                if hasattr(tree_sitter_typescript, 'language'):
+                    self.ts_parser.language = tree_sitter_typescript.language()
+                else:
+                    # For newer bindings (0.23+), use Language constructor
+                    self.ts_parser.language = tree_sitter.Language(tree_sitter_typescript)
+            except Exception:
+                self.ts_parser = None
             
+            # Initialize JavaScript parser
             self.js_parser = tree_sitter.Parser()
-            self.js_parser.language = tree_sitter_javascript.language()
+            try:
+                if hasattr(tree_sitter_javascript, 'language'):
+                    self.js_parser.language = tree_sitter_javascript.language()
+                else:
+                    self.js_parser.language = tree_sitter.Language(tree_sitter_javascript)
+            except Exception:
+                self.js_parser = None
             
+            # Initialize Python parser
             self.py_tree_parser = tree_sitter.Parser()
-            self.py_tree_parser.language = tree_sitter_python.language()
+            try:
+                if hasattr(tree_sitter_python, 'language'):
+                    self.py_tree_parser.language = tree_sitter_python.language()
+                else:
+                    self.py_tree_parser.language = tree_sitter.Language(tree_sitter_python)
+            except Exception:
+                self.py_tree_parser = None
         except Exception as e:
             print(f"Warning: Failed to initialize tree-sitter parsers: {e}", file=sys.stderr)
             self.ts_parser = None
